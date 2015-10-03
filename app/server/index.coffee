@@ -3,12 +3,16 @@ socketio = require "socket.io"
 carrier = require "carrier"
 http = require "http"
 
+BUFFER_DELAY = 5000
+if process.env["BUFFER_DELAY"]
+	BUFFER_DELAY = parseInt(BUFFER_DELAY, 10)
+
 startTime = null
 bufferPacket = (packet) ->
 	# TODO: Check packet is correct format
 	if !startTime?
 		startTime = packet.ts
-	delta = packet.ts - startTime
+	delta = packet.ts - startTime + BUFFER_DELAY
 	if delta < 0
 		delta = 0
 	setTimeout () ->

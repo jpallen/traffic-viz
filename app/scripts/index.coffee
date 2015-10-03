@@ -8,7 +8,7 @@ getQueryParams = () ->
 	pl     = /\+/g
 	search = /([^&=]+)=?([^&]*)/g
 	decode = (s) -> return decodeURIComponent(s.replace(pl, " "))
-	query  = window.location.search.substring(1)
+	query  = window.location.hash.substring(1)
 
 	urlParams = {}
 	while (match = search.exec(query))
@@ -29,6 +29,30 @@ randomPointInCircle = (x, y, r) ->
 	return {x: x + _x, y: y + _y}
 
 drawPacket = (size, duration, hue, from_node, to_node) ->
+	if getQueryParams()["request_style"] == "line"
+		drawPacketAsLine(size, duration, hue, from_node, to_node)
+	else
+		drawPacketAsBullet(size, duration, hue, from_node, to_node)
+
+drawPacketAsLine = (size, duration, hue, from_node, to_node) ->
+	from = randomPointInCircle(from_node.x, from_node.y, from_node.size - size)
+	to = randomPointInCircle(to_node.x, to_node.y, to_node.size - size)
+	if hue?
+		color = "hsl(#{hue}, 100%, 50%)"
+	else
+		color = "#ccc"
+	packet = container.append("line")
+		.attr("x1", from.x)
+		.attr("y1", from.y)
+		.attr("x2", to.x)
+		.attr("y2", to.y)
+		.attr("stroke-width", size)
+		.attr("stroke", color)
+		.transition()
+		.duration(Math.max(duration, 200))
+		.remove()
+
+drawPacketAsBullet = (size, duration, hue, from_node, to_node) ->
 	from = randomPointInCircle(from_node.x, from_node.y, from_node.size - size)
 	to = randomPointInCircle(to_node.x, to_node.y, to_node.size - size)
 	if hue?
@@ -42,7 +66,7 @@ drawPacket = (size, duration, hue, from_node, to_node) ->
 		.attr("fill", color)
 		.transition()
 		.ease("linear")
-		.duration(duration)
+		.duration(Math.max(duration, 800))
 		.attr("cx", to.x)
 		.attr("cy", to.y)
 		.remove()

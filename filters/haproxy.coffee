@@ -4,8 +4,6 @@ haproxy_stream = carrier.carry(process.stdin)
 haproxy_stream.on "line", (line) ->
 	data = parseLogEntry(line)
 	duration = parseInt(data.timings[4], 10)
-	if duration < 800
-		duration = 800
 	hue = null
 	if m = data.url.match(/[0-9a-f]{24}/)
 		oid = m[0]
@@ -14,7 +12,7 @@ haproxy_stream.on "line", (line) ->
 		to: data.backend
 		from: data.client_ip
 		duration: duration
-		size: Math.log(data.size)
+		size: Math.log(data.size + 1) / Math.log(10)
 		ts: data.date
 		hue: hue
 	}

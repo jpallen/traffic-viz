@@ -16,15 +16,18 @@ randomPointInCircle = (x, y, r) ->
 		_y = 2 * r * Math.random() - r
 	return {x: x + _x, y: y + _y}
 
-drawPacket = (size, duration, from_node, to_node) ->
+drawPacket = (size, duration, hue, from_node, to_node) ->
 	from = randomPointInCircle(from_node.x, from_node.y, from_node.size - size)
 	to = randomPointInCircle(to_node.x, to_node.y, to_node.size - size)
-	hue = Math.floor(Math.random() * 360)
+	if hue?
+		color = "hsl(#{hue}, 100%, 50%)"
+	else
+		color = "#ccc"
 	packet = container.append("circle")
 		.attr("cx", from.x)
 		.attr("cy", from.y)
 		.attr("r", size)
-		.attr("fill", "hsl(#{hue}, 50%, 70%)")
+		.attr("fill", color)
 		.transition()
 		.ease("linear")
 		.duration(duration)
@@ -69,7 +72,7 @@ drawNode = (node) ->
 	el.attr("fill-opacity", "0")
 	el.attr("stroke-width", "5px")
 	if node.hue?
-		el.attr("stroke", "hsl(#{node.hue}, 90%, 50%)")
+		el.attr("stroke", "hsl(#{node.hue}, 50%, 50%)")
 	else
 		el.attr("stroke", "#eeeeee")
 
@@ -92,5 +95,5 @@ socket.on "packet", (packet) ->
 		console.warn "Creating node #{packet.name}"
 		to_node = addNode(packet.name, NODE_SIZE)
 
-	drawPacket(packet.size, packet.duration, from_node, to_node)
+	drawPacket(packet.size, packet.duration, packet.hue, from_node, to_node)
 

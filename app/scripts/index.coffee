@@ -37,19 +37,12 @@ drawPacket = (size, duration, hue, from_node, to_node) ->
 
 NODE_SIZE = 30
 PADDING = 20
-BACKEND_NODES = []
-
-FRONTEND_NODE = {
-	name: "lb-0"
-	x: document.body.clientWidth / 2
-	y: document.body.clientHeight / 2
-	size: NODE_SIZE
-}
+NODES = []
 
 addNode = (name, size) ->
 	node = {name, size}
-	BACKEND_NODES.push node
-	BACKEND_NODES.sort (a,b) ->
+	NODES.push node
+	NODES.sort (a,b) ->
 		if a.name > b.name
 			return 1
 		else if a.name < b.name
@@ -59,16 +52,16 @@ addNode = (name, size) ->
 	redrawNodes()
 	return node
 
-recalculateBackendNodePositions = () ->
+recalculateNodePositions = () ->
 	h = document.body.clientHeight
 	w = document.body.clientWidth
 	size = Math.min(h, w)
 	r = size / 2 - NODE_SIZE - PADDING
-	for node, i in BACKEND_NODES
-		theta = 2 * Math.PI / BACKEND_NODES.length * i
+	for node, i in NODES
+		theta = 2 * Math.PI / NODES.length * i
 		node.x = r * Math.cos(theta) + w/2
 		node.y = r * Math.sin(theta) + h/2
-		node.hue = 360 / BACKEND_NODES.length * i
+		node.hue = 360 / NODES.length * i
 
 drawNode = (node) ->
 	if node.hue?
@@ -95,22 +88,25 @@ drawNode = (node) ->
 
 redrawNodes = () ->
 	container.selectAll("*").remove()
-	recalculateBackendNodePositions()
-	drawNode(FRONTEND_NODE)
-	for node in BACKEND_NODES
+	recalculateNodePositions()
+	for node in NODES
 		drawNode(node)
 
 socket = io.connect()
 socket.on "packet", (packet) ->
-	from_node = FRONTEND_NODE
 	to_node = null
-	for node in BACKEND_NODES
-		if packet.name == node.name
+	from_node = null
+	for node in NODES
+		if packet.to == node.name
 			to_node = node
-			break
+		if packet.from == node.name
+			from_node = node
 	if !to_node?
-		console.warn "Creating node #{packet.name}"
-		to_node = addNode(packet.name, NODE_SIZE)
+		console.warn "Creating node #{packet.to}"
+		to_node = addNode(packet.to, NODE_SIZE)
+	if !from_node?
+		console.warn "Creating node #{packet.from}"
+		from_node = addNode(packet.from, NODE_SIZE)
 
 	drawPacket(packet.size, packet.duration, packet.hue, from_node, to_node)
 

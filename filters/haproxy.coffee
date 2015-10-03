@@ -11,7 +11,8 @@ haproxy_stream.on "line", (line) ->
 		oid = m[0]
 		hue = parseInt(oid.slice(20), 16) & 360
 	console.log JSON.stringify {
-		name: data.name
+		to: data.backend
+		from: data.client_ip
 		duration: duration
 		size: Math.log(data.size)
 		ts: data.date
@@ -20,9 +21,10 @@ haproxy_stream.on "line", (line) ->
 	
 parseLogEntry = (line) ->
 	parts = line.split(" ")
+	client_ip = parts[1].split(":")[0]
 	date = new Date(parts[2].replace(/[\[\]]/g, "").replace(/:/, " ")).getTime()
-	name = parts[4]
+	backend = parts[4]
 	timings = parts[5].split('/')
 	size = parseInt(parts[7], 10)
 	url = parts.slice(14).join(" ").replace(/^"/, "").replace(/"$/, "")
-	return {name, timings, size, date, url}
+	return {backend, timings, size, date, url, client_ip}

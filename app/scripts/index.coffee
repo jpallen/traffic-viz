@@ -35,9 +35,6 @@ drawPacket = (size, duration, from_node, to_node) ->
 NODE_SIZE = 30
 PADDING = 20
 BACKEND_NODES = []
-for backend in ["web", "web-api", "docstore", "filestore", "clsi"]
-	for server in ["web-1", "web-2", "web-3", "web-4", "web-5", "web-6"]
-		BACKEND_NODES.push { name: "#{backend}/#{server}", size: NODE_SIZE }
 
 FRONTEND_NODE = {
 	name: "lb-0"
@@ -45,6 +42,12 @@ FRONTEND_NODE = {
 	y: document.body.clientHeight / 2
 	size: NODE_SIZE
 }
+
+addNode = (name, size) ->
+	node = {name, size}
+	BACKEND_NODES.push node
+	redrawNodes()
+	return node
 
 recalculateBackendNodePositions = () ->
 	h = document.body.clientHeight
@@ -70,13 +73,24 @@ drawNode = (node) ->
 	else
 		el.attr("stroke", "#eeeeee")
 
-recalculateBackendNodePositions()
-drawNode(FRONTEND_NODE)
-for node in BACKEND_NODES
-	drawNode(node)
+redrawNodes = () ->
+	container.selectAll("circle").remove()
+	recalculateBackendNodePositions()
+	drawNode(FRONTEND_NODE)
+	for node in BACKEND_NODES
+		drawNode(node)
 
-for i in [0..10000]
-	setTimeout () ->
-		to_node = BACKEND_NODES[Math.floor(Math.random()*BACKEND_NODES.length)]
-		drawPacket(Math.random() * 10 + 3, Math.random() * 1000 + 500, FRONTEND_NODE, to_node)
-	, Math.floor(Math.random() * 100000)
+socket = io.connect()
+socket.on "packet", (packet) ->
+	from_node = FRONTEND_NODE
+	to_node = null
+	for node in BACKEND_NODES
+		if packet.name == node.name
+			to_node = node
+			break
+	if !to_node?
+		console.warn "Creating node #{packet.name}"
+		to_node = addNode(packet.name, NODE_SIZE)
+
+	drawPacket(packet.size, packet.duration, from_node, to_node)
+

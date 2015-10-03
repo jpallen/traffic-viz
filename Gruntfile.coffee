@@ -4,7 +4,6 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks 'grunt-contrib-watch'
 	grunt.loadNpmTasks 'grunt-browserify'
 	grunt.loadNpmTasks 'grunt-express-server'
-	grunt.loadNpmTasks 'grunt-contrib-connect'
 	grunt.loadNpmTasks 'grunt-mocha-test'
 	
 	grunt.initConfig {
@@ -30,12 +29,6 @@ module.exports = (grunt) ->
 				options:
 					opts: ['node_modules/coffee-script/bin/coffee']
 					script: "app/server/index.coffee"
-					port: 8000
-		
-		connect:
-			server:
-				options:
-					base: "public"
 					port: 8000
 		
 		watch:
@@ -70,4 +63,6 @@ module.exports = (grunt) ->
 					require: 'coffee-script/register'
 	}
 	
-	grunt.registerTask "run", ["jade", "less", "browserify", "connect", "watch"]
+	grunt.registerTask "build", ["jade", "less", "browserify"]
+	
+	grunt.registerTask "run", ["jade", "less", "browserify", "express", "watch"]

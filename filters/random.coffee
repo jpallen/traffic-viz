@@ -33,7 +33,8 @@ setInterval generateEvents = () ->
 		setTimeout () ->
 			console.log JSON.stringify {
 				ts: Date.now()
-				name: "web-#{Math.floor(Math.random() * NODE_COUNT)}"
+				from: "src-#{Math.floor(Math.random() * NODE_COUNT)}"
+				to: "dest-#{Math.floor(Math.random() * NODE_COUNT)}"
 				size: MIN_SIZE + Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE))
 				duration: MIN_DURATION + Math.floor(Math.random() * (MAX_DURATION - MIN_DURATION))
 			}

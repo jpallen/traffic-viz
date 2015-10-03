@@ -49,6 +49,13 @@ FRONTEND_NODE = {
 addNode = (name, size) ->
 	node = {name, size}
 	BACKEND_NODES.push node
+	BACKEND_NODES.sort (a,b) ->
+		if a.name > b.name
+			return 1
+		else if a.name < b.name
+			return -1
+		else
+			return 0
 	redrawNodes()
 	return node
 
@@ -64,20 +71,30 @@ recalculateBackendNodePositions = () ->
 		node.hue = 360 / BACKEND_NODES.length * i
 
 drawNode = (node) ->
-	el = container.append("circle")
+	if node.hue?
+		color = "hsl(#{node.hue}, 50%, 50%)"
+		text_color = "hsl(#{node.hue}, 50%, 80%)"
+	else
+		color = "#ccc"
+		text_color = "#eee"
+
+	container.append("circle")
 		.attr("cx", node.x)
 		.attr("cy", node.y)
 		.attr("r", NODE_SIZE)
+		.attr("fill-opacity", "0")
+		.attr("stroke-width", "5px")
+		.attr("stroke", color)
 	
-	el.attr("fill-opacity", "0")
-	el.attr("stroke-width", "5px")
-	if node.hue?
-		el.attr("stroke", "hsl(#{node.hue}, 50%, 50%)")
-	else
-		el.attr("stroke", "#eeeeee")
+	container.append("text")
+		.attr("x", node.x)
+		.attr("y", node.y + 5)
+		.attr("fill", text_color)
+		.attr("text-anchor", "middle")
+		.text(node.name)
 
 redrawNodes = () ->
-	container.selectAll("circle").remove()
+	container.selectAll("*").remove()
 	recalculateBackendNodePositions()
 	drawNode(FRONTEND_NODE)
 	for node in BACKEND_NODES

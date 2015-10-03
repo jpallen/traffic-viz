@@ -4,6 +4,18 @@ container = d3
 	.attr("height", "100%")
 	.attr("width", "100%")
 
+getQueryParams = () ->
+	pl     = /\+/g
+	search = /([^&=]+)=?([^&]*)/g
+	decode = (s) -> return decodeURIComponent(s.replace(pl, " "))
+	query  = window.location.search.substring(1)
+
+	urlParams = {}
+	while (match = search.exec(query))
+		urlParams[decode(match[1])] = decode(match[2]);
+	
+	return urlParams
+
 randomPointInCircle = (x, y, r) ->
 	# Return a uniformly distributed random point in the circle with center
 	# at c = {x:..., y:...} and radius r.
@@ -35,7 +47,7 @@ drawPacket = (size, duration, hue, from_node, to_node) ->
 		.attr("cy", to.y)
 		.remove()
 
-NODE_SIZE = 30
+NODE_SIZE = 15
 PADDING = 20
 NODES = []
 
@@ -53,6 +65,14 @@ addNode = (name, size) ->
 	return node
 
 recalculateNodePositions = () ->
+	if getQueryParams()["layout"] == "rows"
+		recalculateNodePositionsInRows()
+	else if getQueryParams()["layout"] == "columns"
+		recalculateNodePositionsInColumns()
+	else
+		recalculateNodePositionsInCircle()
+
+recalculateNodePositionsInCircle = () ->
 	h = document.body.clientHeight
 	w = document.body.clientWidth
 	size = Math.min(h, w)
@@ -62,6 +82,52 @@ recalculateNodePositions = () ->
 		node.x = r * Math.cos(theta) + w/2
 		node.y = r * Math.sin(theta) + h/2
 		node.hue = 360 / NODES.length * i
+
+_groupByRegex = (nodes) ->
+	regexs = {}
+	for key, value of getQueryParams()
+		if m = key.match(/^group(\d+)$/)
+			bucket_index = parseInt(m[1], 10)
+			regexs[value] = bucket_index
+
+	buckets = []
+	for node in NODES
+		bucket = 0
+		for regex, bucket_index of regexs
+			if node.name.match(regex)
+				bucket = bucket_index
+				break
+		buckets[bucket] ?= []
+		buckets[bucket].push node
+	
+	return buckets
+
+recalculateNodePositionsInRows = () ->
+	height = document.body.clientHeight
+	width = document.body.clientWidth
+	
+	rows = _groupByRegex(NODES)
+	vertical_bucket_size = height / rows.length
+	for nodes, row_index in rows
+		nodes ?= []
+		horizontal_bucket_size = width / nodes.length
+		for node, node_index in nodes
+			node.x = horizontal_bucket_size * (node_index + 0.5)
+			node.y = vertical_bucket_size * (row_index + 0.5)
+
+recalculateNodePositionsInColumns = () ->
+	height = document.body.clientHeight
+	width = document.body.clientWidth
+	
+	columns = _groupByRegex(NODES)
+	horizontal_bucket_size = width / columns.length
+	for nodes, column_index in columns
+		nodes ?= []
+		vertical_bucket_size = height / nodes.length
+		for node, node_index in nodes
+			node.x = horizontal_bucket_size * (column_index + 0.5)
+			node.y = vertical_bucket_size * (node_index + 0.5)
+	
 
 drawNode = (node) ->
 	if node.hue?
@@ -76,7 +142,7 @@ drawNode = (node) ->
 		.attr("cy", node.y)
 		.attr("r", NODE_SIZE)
 		.attr("fill-opacity", "0")
-		.attr("stroke-width", "5px")
+		.attr("stroke-width", "2px")
 		.attr("stroke", color)
 	
 	container.append("text")
